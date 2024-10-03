@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+      # Routes that do not require JWT Authentication
+        - id: user-service-public
+          uri: ${USER_SERVICE_URI:http://localhost:8081}
+          predicates:
+            - Path=/user/register
+          filters:
+            - name: PostUserCreationFilter
+
+        - id: pub-service-public
+          uri: ${PUB_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/pub/getPubs/**, /pub/searchPubs/**, /pub/getPub/**, /pub/info/**
+
+        - id: review-service-public
+          uri: ${REVIEW_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/review/rating/**, /review/reviews/**
+
+      # Routes that require JWT Authentication
+        - id: user-service-private
+          uri: ${USER_SERVICE_URI:http://localhost:8081}
+          predicates:
+            - Path=/user/**
+          filters:
+            - name: JwtAuthFilter
+
+        - id: pub-service-private
+          uri: ${PUB_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/pub/**
+          filters:
+            - name: JwtAuthFilter
+
+        - id: review-service
+          uri: ${REVIEW_SERVICE_URI:http://localhost:8083}
+          predicates:
+            - Path=/review/**
+          filters:
+            - name: JwtAuthFilter
+
+        - id: visited-service
+          uri: ${REVIEW_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/visited/**
+          filters:
+            - name: JwtAuthFilter
+
+auth-uri: ${AUTH_SERVICE_URI:http://localhost:3000}
