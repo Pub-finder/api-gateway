@@ -13,7 +13,7 @@ spring:
             - name: PostUserCreationFilter
 
         - id: pub-service-public
-          uri: ${PUB_SERVICE_URI:http://localhost:8082}
+          uri: ${PUB_SERVICE_URI:http://localhost:8085}
           predicates:
             - Path=/pub/getPubs/**, /pub/searchPubs/**, /pub/getPub/**, /pub/info/**
 
@@ -52,3 +52,6 @@ spring:
             - name: JwtAuthFilter
 
 auth-uri: ${AUTH_SERVICE_URI:http://localhost:3000}
+
+server:
+  port: 8080

@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - pub-service
+      - review-service
+      - auth-service
+    environment:
+      - REVIEW_SERVICE_URI=http://review-service:8084
+      - USER_SERVICE_URI=http://user-service:8083
+      - PUB_SERVICE_URI=http://pub-service:8082
+      - AUTH_SERVICE_URI=http://auth-service:8081
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ../auth-service
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - user-db
+    environment:
+      - DB_URL=user-db:5432/userservicedb?charSet=UTF-8
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+      # - JWT_SECRET
+      # - JWT_EXPIRATION
+      # - JWT_REFRESH_EXPIRATION
+      - CORS_URL=http://api-gateway:8080
+    networks:
+      - microservice-network
+
+  # Pub Service
+  pub-service:
+    build:
+      context: ../pub-service
+    container_name: pub-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - pub-db
+    environment:
+      - DB_URL=pub-db:5432/pubservicedb?charSet=UTF-8
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+      #- CORS_URL=http://api-gateway:8080
+
+  # Review Service
+  review-service:
+    build:
+      context: ../review-service
+    container_name: review-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - review-db
+    environment:
+      - DB_URL=review-db:5432/reviewservicedb?charSet=UTF-8
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+      - CORS_URL=http://api-gateway:8080
+    networks:
+      - microservice-network
+
+  # User Service
+  user-service:
+    build:
+      context: ../user-service
+    container_name: user-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - user-db
+    environment:
+      - DB_URL=user-db:5432/userservicedb?charSet=UTF-8
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+      - CORS_URL=http://api-gateway:8080
+    networks:
+      - microservice-network
+
+  # Pub Service Database
+  pub-db:
+    image: 'postgres:15.2'
+    container_name: pub-db
+    ports:
+      - '15433:5432'
+    environment:
+      - 'POSTGRES_USER=admin'
+      - 'POSTGRES_DB=pubservicedb'
+      - 'POSTGRES_PASSWORD=admin'
+      - 'POSTGRES_INITDB_ARGS=--encoding=UTF-8'
+    volumes:
+      - pub-db-data:/var/lib/postgresql/data
+
+  # Review Service Database
+  review-db:
+    image: 'postgres:15.2'
+    ports:
+      - '15434:5432'
+    environment:
+      - 'POSTGRES_USER=admin'
+      - 'POSTGRES_DB=reviewservicedb'
+      - 'POSTGRES_PASSWORD=admin'
+      - 'POSTGRES_INITDB_ARGS=--encoding=UTF-8'
+    volumes:
+      - review-db-data:/var/lib/postgresql/data
+    networks:
+      - microservice-network
+
+  # User Service Database
+  user-db:
+    image: 'postgres:15.2'
+    container_name: user-db
+    ports:
+      - '15432:5432'
+    environment:
+      - 'POSTGRES_USER=admin'
+      - 'POSTGRES_DB=userservicedb'
+      - 'POSTGRES_PASSWORD=admin'
+      - 'POSTGRES_INITDB_ARGS=--encoding=UTF-8'
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    networks:
+      - microservice-network
+
+volumes:
+  pub-db-data:
+  user-db-data:
+  review-db-data:
+
+networks:
+  microservice-network:
+    driver: bridge
