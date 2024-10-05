@@ -13,19 +13,19 @@ spring:
             - name: PostUserCreationFilter
 
         - id: pub-service-public
-          uri: ${AUTH_SERVICE_URI:http://localhost:8081}
+          uri: ${PUB_SERVICE_URI:http://localhost:8082}
           predicates:
             - Path=/pub/getPubs/**, /pub/searchPubs/**, /pub/getPub/**, /pub/info/**
 
         - id: review-service-public
-          uri: ${REVIEW_SERVICE_URI:http://localhost:8082}
+          uri: ${REVIEW_SERVICE_URI:http://localhost:8083}
           predicates:
             - Path=/review/rating/**, /review/reviews/**
 
         - id: auth-service
           uri: ${AUTH_SERVICE_URI:http://localhost:8081}
           predicates:
-            - Path=/auth/login
+            - Path=/auth/login, /auth/refreshToken/**, /auth/logout/**
 
       # Routes that require JWT Authentication
         - id: user-service-private
@@ -50,7 +50,7 @@ spring:
             - name: JwtAuthFilter
 
         - id: visited-service
-          uri: ${REVIEW_SERVICE_URI:http://localhost:8082}
+          uri: ${REVIEW_SERVICE_URI:http://localhost:8083}
           predicates:
             - Path=/visited/**
           filters:

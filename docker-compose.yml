@@ -14,10 +14,12 @@ services:
       - review-service
       - auth-service
     environment:
-      - REVIEW_SERVICE_URI=http://review-service:8084
-      - USER_SERVICE_URI=http://user-service:8083
-      - PUB_SERVICE_URI=http://pub-service:8082
       - AUTH_SERVICE_URI=http://auth-service:8081
+      - PUB_SERVICE_URI=http://pub-service:8082
+      - REVIEW_SERVICE_URI=http://review-service:8083
+      - USER_SERVICE_URI=http://user-service:8084
+    networks:
+      - microservice-network
 
   # Auth Service
   auth-service:
@@ -35,7 +37,6 @@ services:
       # - JWT_SECRET
       # - JWT_EXPIRATION
       # - JWT_REFRESH_EXPIRATION
-      - CORS_URL=http://api-gateway:8080
     networks:
       - microservice-network
 
@@ -53,21 +54,6 @@ services:
       - DB_USERNAME=admin
       - DB_PASSWORD=admin
       #- CORS_URL=http://api-gateway:8080
-
-  # Review Service
-  review-service:
-    build:
-      context: ../review-service
-    container_name: review-service
-    ports:
-      - "8083:8083"
-    depends_on:
-      - review-db
-    environment:
-      - DB_URL=review-db:5432/reviewservicedb?charSet=UTF-8
-      - DB_USERNAME=admin
-      - DB_PASSWORD=admin
-      - CORS_URL=http://api-gateway:8080
     networks:
       - microservice-network
 
@@ -82,6 +68,22 @@ services:
       - user-db
     environment:
       - DB_URL=user-db:5432/userservicedb?charSet=UTF-8
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+    networks:
+      - microservice-network
+
+  # Review Service
+  review-service:
+    build:
+      context: ../review-service
+    container_name: review-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - review-db
+    environment:
+      - DB_URL=review-db:5432/reviewservicedb?charSet=UTF-8
       - DB_USERNAME=admin
       - DB_PASSWORD=admin
       - CORS_URL=http://api-gateway:8080
@@ -101,19 +103,6 @@ services:
       - 'POSTGRES_INITDB_ARGS=--encoding=UTF-8'
     volumes:
       - pub-db-data:/var/lib/postgresql/data
-
-  # Review Service Database
-  review-db:
-    image: 'postgres:15.2'
-    ports:
-      - '15434:5432'
-    environment:
-      - 'POSTGRES_USER=admin'
-      - 'POSTGRES_DB=reviewservicedb'
-      - 'POSTGRES_PASSWORD=admin'
-      - 'POSTGRES_INITDB_ARGS=--encoding=UTF-8'
-    volumes:
-      - review-db-data:/var/lib/postgresql/data
     networks:
       - microservice-network
 
@@ -130,6 +119,21 @@ services:
       - 'POSTGRES_INITDB_ARGS=--encoding=UTF-8'
     volumes:
       - user-db-data:/var/lib/postgresql/data
+    networks:
+      - microservice-network
+
+  # Review Service Database
+  review-db:
+    image: 'postgres:15.2'
+    ports:
+      - '15434:5432'
+    environment:
+      - 'POSTGRES_USER=admin'
+      - 'POSTGRES_DB=reviewservicedb'
+      - 'POSTGRES_PASSWORD=admin'
+      - 'POSTGRES_INITDB_ARGS=--encoding=UTF-8'
+    volumes:
+      - review-db-data:/var/lib/postgresql/data
     networks:
       - microservice-network
 
