@@ -21,9 +21,9 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
 
     private final WebClient webClient;
 
-    public JwtAuthFilter(WebClient.Builder webClientBuilder) {
+    public JwtAuthFilter() {
         super(Config.class);
-        this.webClient = webClientBuilder.baseUrl(AUTH_URI).build();
+        this.webClient = WebClient.create();
     }
 
     @Override
@@ -41,7 +41,7 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
 
             return this.webClient
                     .get()
-                    .uri("/auth/validateToken?token=" + jwt)
+                    .uri(AUTH_URI+"/auth/validateToken/{token}", jwt)
                     .retrieve()
                     .bodyToMono(Boolean.class)
                     .flatMap(isValid -> {

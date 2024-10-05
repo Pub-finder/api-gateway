@@ -6,14 +6,14 @@ spring:
       routes:
       # Routes that do not require JWT Authentication
         - id: user-service-public
-          uri: ${USER_SERVICE_URI:http://localhost:8081}
+          uri: ${USER_SERVICE_URI:http://localhost:8084}
           predicates:
             - Path=/user/register
           filters:
             - name: PostUserCreationFilter
 
         - id: pub-service-public
-          uri: ${PUB_SERVICE_URI:http://localhost:8085}
+          uri: ${AUTH_SERVICE_URI:http://localhost:8081}
           predicates:
             - Path=/pub/getPubs/**, /pub/searchPubs/**, /pub/getPub/**, /pub/info/**
 
@@ -22,9 +22,14 @@ spring:
           predicates:
             - Path=/review/rating/**, /review/reviews/**
 
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URI:http://localhost:8081}
+          predicates:
+            - Path=/auth/login
+
       # Routes that require JWT Authentication
         - id: user-service-private
-          uri: ${USER_SERVICE_URI:http://localhost:8081}
+          uri: ${USER_SERVICE_URI:http://localhost:8084}
           predicates:
             - Path=/user/**
           filters:
@@ -51,7 +56,7 @@ spring:
           filters:
             - name: JwtAuthFilter
 
-auth-uri: ${AUTH_SERVICE_URI:http://localhost:3000}
+auth-uri: ${AUTH_SERVICE_URI:http://localhost:8081}
 
 server:
   port: 8080

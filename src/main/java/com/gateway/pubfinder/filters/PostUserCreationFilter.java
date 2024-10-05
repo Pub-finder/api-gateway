@@ -6,17 +6,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.server.reactive.ServerHttpResponse;
-import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.nio.charset.StandardCharsets;
 
 @Component
 public class PostUserCreationFilter extends AbstractGatewayFilterFactory<PostUserCreationFilter.Config> {
@@ -28,45 +21,42 @@ public class PostUserCreationFilter extends AbstractGatewayFilterFactory<PostUse
 
     private final WebClient webClient;
 
-    public PostUserCreationFilter(WebClient.Builder webClientBuilder) {
+    public PostUserCreationFilter() {
         super(Config.class);
-        this.webClient = webClientBuilder.baseUrl(AUTH_URI).build();
+        this.webClient = WebClient.create();
     }
 
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            ServerHttpResponse originalResponse = exchange.getResponse();
-            ServerHttpResponseDecorator decoratedResponse = new ServerHttpResponseDecorator(originalResponse) {
-                public Mono<Void> writeWith(Flux<DataBuffer> body) {
-                    HttpHeaders headers = getDelegate().getHeaders();
-                    String userId = headers.getFirst("X-User-Id");
+            // Proceed with the filter chain and handle the response
+            return chain.filter(exchange).then(Mono.defer(() -> {
+                logger.info("intercepted response");
 
-                    if (userId != null && getDelegate().getStatusCode() != null && getDelegate().getStatusCode().is2xxSuccessful()) {
-                        return webClient.get()
-                                .uri("/auth/auth-service/generateToken?userId=" + userId)
-                                .retrieve()
-                                .bodyToMono(AuthenticationResponse.class)
-                                .flatMap(authResponse -> {
-                                    String responseJson = String.format(
-                                            "{\"accessToken\":\"%s\", \"refreshToken\":\"%s\"}",
-                                            authResponse.getAccessToken(), authResponse.getRefreshToken());
+                var response = exchange.getResponse();
+                var headers = response.getHeaders();
+                String userId = headers.getFirst("X-User-Id");
 
-                                    byte[] bytes = responseJson.getBytes(StandardCharsets.UTF_8);
-                                    DataBuffer buffer = originalResponse.bufferFactory().wrap(bytes);
-
-                                    getDelegate().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                                    getDelegate().getHeaders().setContentLength(bytes.length);
-
-                                    return getDelegate().writeWith(Mono.just(buffer));
-                                });
-                    }
-
-                    return super.writeWith(body);
+                if (userId != null && response.getStatusCode() != null && response.getStatusCode().is2xxSuccessful()) {
+                    return webClient
+                            .get()
+                            .uri(AUTH_URI + "/auth/generateToken/{userId}", userId)
+                            .retrieve()
+                            .bodyToMono(AuthenticationResponse.class)
+                            .flatMap(authResponse -> {
+                                response.getHeaders().set("X-ACCESS-TOKEN", authResponse.getAccessToken());
+                                response.getHeaders().set("X-REFRESH-TOKEN", authResponse.getRefreshToken());
+                                return chain.filter(exchange);
+                            })
+                            .onErrorResume(e -> {
+                                logger.error("Error while creating token", e);
+                                response.setStatusCode(HttpStatus.UNAUTHORIZED);
+                                return response.setComplete();
+                            });
                 }
-            };
 
-            return chain.filter(exchange.mutate().response(decoratedResponse).build());
+                return chain.filter(exchange);
+            }));
         };
     }
 
