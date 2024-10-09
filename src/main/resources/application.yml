@@ -55,6 +55,15 @@ spring:
             - Path=/visited/**
           filters:
             - name: JwtAuthFilter
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - ${ALLOWED_ORIGIN:http://localhost:3000}
+            allowedMethods: GET, POST, PUT, DELETE, OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
 
 auth-uri: ${AUTH_SERVICE_URI:http://localhost:8081}
 
