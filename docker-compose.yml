@@ -53,7 +53,6 @@ services:
       - DB_URL=pub-db:5432/pubservicedb?charSet=UTF-8
       - DB_USERNAME=admin
       - DB_PASSWORD=admin
-      #- CORS_URL=http://api-gateway:8080
     networks:
       - microservice-network
 
@@ -86,7 +85,6 @@ services:
       - DB_URL=review-db:5432/reviewservicedb?charSet=UTF-8
       - DB_USERNAME=admin
       - DB_PASSWORD=admin
-      - CORS_URL=http://api-gateway:8080
     networks:
       - microservice-network
 

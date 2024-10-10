@@ -62,8 +62,11 @@ spring:
               - ${ALLOWED_ORIGIN:http://localhost:3000}
             allowedMethods: GET, POST, PUT, DELETE, OPTIONS
             allowedHeaders: "*"
+            exposedHeaders:
+              - "X-User-Id"
+              - "X-REFRESH-TOKEN"
+              - "X-ACCESS-TOKEN"
             allowCredentials: true
-
 
 auth-uri: ${AUTH_SERVICE_URI:http://localhost:8081}
 
