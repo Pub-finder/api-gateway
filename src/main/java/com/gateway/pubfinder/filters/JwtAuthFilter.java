@@ -1,5 +1,6 @@
 package com.gateway.pubfinder.filters;
 
+import com.gateway.pubfinder.dto.TokenValidationResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,10 +44,14 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
                     .get()
                     .uri(AUTH_URI+"/auth/validateToken/{token}", jwt)
                     .retrieve()
-                    .bodyToMono(Boolean.class)
-                    .flatMap(isValid -> {
-                        if (Boolean.TRUE.equals(isValid)) {
+                    .bodyToMono(TokenValidationResponse.class)
+                    .flatMap(response -> {
+                        if (TokenValidationResponse.VALID.equals(response)) {
                             return chain.filter(exchange);
+                        } else if (TokenValidationResponse.EXPIRED.equals(response)) {
+                            logger.warn("Expired Token");
+                            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                            return exchange.getResponse().setComplete();
                         } else {
                             logger.warn("Invalid Token");
                             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -55,7 +60,11 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
                     })
                     .onErrorResume(e -> {
                         logger.error("Error while validating token", e);
-                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                        if (e instanceof java.net.ConnectException) {
+                            exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+                        } else {
+                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                        }
                         return exchange.getResponse().setComplete();
                     });
         };
