@@ -57,15 +57,6 @@ public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Co
                             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                             return exchange.getResponse().setComplete();
                         }
-                    })
-                    .onErrorResume(e -> {
-                        logger.error("Error while validating token", e);
-                        if (e instanceof java.net.ConnectException) {
-                            exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
-                        } else {
-                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        }
-                        return exchange.getResponse().setComplete();
                     });
         };
     }
