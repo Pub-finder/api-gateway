@@ -72,3 +72,11 @@ auth-uri: ${AUTH_SERVICE_URI:http://localhost:8081}
 
 server:
   port: 8080
+  ssl:
+    enabled: true
+    key-store-type: ${KEY_STORE_TYPE:type}
+    key-store: ${KEY_STORE_PATH:type}
+    key-store-password: ${KEY_STORE_PWD:password}
+    key-alias: ${KEY_STOR_ALIAS:alias}
+    protocol: TLS
+    enabled-protocols: TLSv1.2
