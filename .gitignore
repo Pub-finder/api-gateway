@@ -37,3 +37,4 @@ out/
 .vscode/
 
 src/main/resources/keystore/
+src/main/resources/application-dev.yml
